@@ -1,9 +1,9 @@
+import _ from 'lodash';
+import {instanceOf} from 'prop-types';
 import React, {Component} from 'react';
+import {Cookies, withCookies} from 'react-cookie';
 import './App.css';
 import fire from './firebase';
-import _ from 'lodash';
-import {withCookies, Cookies} from 'react-cookie';
-import {instanceOf} from 'prop-types';
 
 class App extends Component {
     static propTypes = {
@@ -16,9 +16,12 @@ class App extends Component {
             players: [],
             games: [],
             sessionId: null,
-            currentPlayer: props.cookies.get('playerName') || null,
-            selectedGame: null,
-            submitted: false
+            currentPlayer: props.cookies.get('currentPlayer') || {
+                name: null,
+                preferredGame: null,
+                hasVoted: false,
+            },
+            selectedGame: null
         };
     }
 
@@ -48,21 +51,31 @@ class App extends Component {
                 return;
             this.setState({players: _.pull(this.state.players, data.player)});
         });
-        if(this.state.currentPlayer != null && !_.has(this.state.players, this.state.currentPlayer)) {
-            this.setState({submitted: true})
-        }
+    }
+
+    handlePlayerSelected(name) {
+        this.setState({currentPlayer: _.assign(this.state.currentPlayer, {name})});
+    }
+
+    handleGameSelected(preferredGame) {
+        this.setState({currentPlayer: _.assign(this.state.currentPlayer, {preferredGame})});
     }
 
     handleSubmit() {
-        if (this.state.sessionId == null || this.state.currentPlayer == null || this.state.selectedGame == null) {
+        if (this.state.sessionId == null
+            || this.state.currentPlayer == null
+            || this.state.currentPlayer.name == null
+            || this.state.currentPlayer.preferredGame == null
+            || this.state.currentPlayer.hasVoted) {
             return;
         }
-        this.addPlayerVote(this.state.sessionId, this.state.currentPlayer, this.state.selectedGame);
-        this.props.cookies.set('playerName', this.state.currentPlayer);
-        this.setState({submitted: true});
+        this.addPlayerVote(this.state.sessionId, this.state.currentPlayer);
+        let updatedPlayer = _.assign(this.state.currentPlayer, {hasVoted: true});
+        this.props.cookies.set('currentPlayer', updatedPlayer);
+        this.setState({currentPlayer: updatedPlayer});
     }
 
-    addPlayerVote(sessionId, currentPlayer, selectedGame) {
+    addPlayerVote(sessionId, currentPlayer) {
         let message = fire.database().ref('/messages/votes').push();
         let key = message.key;
 
@@ -71,8 +84,8 @@ class App extends Component {
             created: new Date().toISOString(),
             data: {
                 sessionId,
-                player: currentPlayer,
-                game: selectedGame
+                player: currentPlayer.name,
+                game: currentPlayer.preferredGame
             }
         });
         return key;
@@ -96,10 +109,10 @@ class App extends Component {
             <div className="App">
                 <header className="App-header">
                     <p>Voting for session {this.state.sessionId}</p>
-                    {this.state.submitted ?
+                    {this.state.currentPlayer && this.state.currentPlayer.hasVoted ?
                         (<div>
-                            <p>Thanks, {this.state.currentPlayer} for your submission.</p>
-                            <p>Waiting on {this.state.players.join(', ')} to vote.</p>
+                            <p>Thanks, {this.state.currentPlayer.name} for your submission.</p>
+                            <p>Waiting on votes from: {this.state.players.join(', ')}.</p>
                         </div>)
                         :
                         <div>
@@ -109,7 +122,7 @@ class App extends Component {
                                 {this.state.players.map((name, i) =>
                                     (<div>
                                         <input type="radio" id={'player-' + i} name="current-player" value={name}
-                                               onClick={() => this.setState({currentPlayer: name})}/>
+                                               onClick={() => this.handlePlayerSelected(name)}/>
                                         <label htmlFor={'player-' + i}>{name}</label>
                                     </div>)
                                 )}
@@ -119,7 +132,7 @@ class App extends Component {
                                 {this.state.games.map((name, i) =>
                                     (<div>
                                         <input type="radio" id={'game-' + i} name="selected-game" value={name}
-                                               onClick={() => this.setState({selectedGame: name})}/>
+                                               onClick={() => this.handleGameSelected(name)}/>
                                         <label htmlFor={'game-' + i}>{name}</label>
                                     </div>)
                                 )}
