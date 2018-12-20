@@ -4,6 +4,7 @@ import React, {Component} from 'react';
 import {Cookies, withCookies} from 'react-cookie';
 import './App.css';
 import fire from './firebase';
+import PlayerBuilder from './models/Player'
 
 class App extends Component {
     static propTypes = {
@@ -15,14 +16,16 @@ class App extends Component {
         this.state = {
             players: [],
             games: [],
-            sessionId: null,
-            currentPlayer: props.cookies.get('currentPlayer') || {
-                name: null,
-                preferredGame: null,
-                hasVoted: false,
+            currentPlayer: props.cookies.get('currentPlayer') || PlayerBuilder.build(),
+            session: {
+                id: null,
+                votes: [],
+                selectedGame: null
             },
-            votes: [],
-            selectedGame: null
+            form: {
+                player: null,
+                game: null
+            }
         };
     }
 
@@ -40,51 +43,38 @@ class App extends Component {
             });
 
         fire.database().ref('/sessions').orderByChild('created').limitToFirst(1).on('value', snapshot => {
-            let sessionId;
+            let session = {};
             let sessionRef = snapshot.val();
             if (sessionRef) {
-                let sessionData = _.values(sessionRef)[0];
-                sessionId = sessionData.id;
-                console.log('found latest session:', sessionData);
-                let remainingPlayers = _.pullAll(this.state.players, _.keys(sessionData.votes));
-                let selectedGame = null;
+                session = _.values(sessionRef)[0];
+                console.log('found latest session:', session);
+                let remainingPlayers = _.pullAll(this.state.players, _.keys(session.votes));
                 if (remainingPlayers.length === 0) {
-                    selectedGame = this.computeGameDecision(sessionData.id, sessionData.votes);
+                    session.selectedGame = this.computeGameDecision(session.id, session.votes);
                 }
-                this.setState({votes: sessionData.votes, players: remainingPlayers, selectedGame});
+                this.setState({session, players: remainingPlayers});
             } else {
-                sessionId = this.createNewSession();
-                console.log('created new session', sessionId);
+                session.id = this.createNewSession();
+                console.log('created new session', session);
             }
-            this.setState({sessionId});
+            this.setState({session});
         });
     }
 
-    handlePlayerSelected(name) {
-        this.setState({currentPlayer: _.assign(this.state.currentPlayer, {name})});
+    handlePlayerSelected(player) {
+        this.setState({form: _.assign(this.state.form, {player})});
     }
 
-    handleGameSelected(preferredGame) {
-        this.setState({currentPlayer: _.assign(this.state.currentPlayer, {preferredGame})});
+    handleGameSelected(game) {
+        this.setState({form: _.assign(this.state.form, {game})});
     }
 
     handleSubmit() {
-        if (this.state.sessionId == null
-            || this.state.currentPlayer == null
-            || this.state.currentPlayer.name == null
-            || this.state.currentPlayer.preferredGame == null
-            || this.state.currentPlayer.hasVoted) {
-            return;
-        }
-        this.addPlayerVote(this.state.sessionId, this.state.currentPlayer);
-        let updatedPlayer = _.assign(this.state.currentPlayer, {hasVoted: true});
-        this.props.cookies.set('currentPlayer', updatedPlayer);
-        this.setState({currentPlayer: updatedPlayer});
+        this.state.currentPlayer.chooseName(this.state.form.player);
+        this.state.currentPlayer.registerPreferencesForSession(this.state.session.id, this.state.form.game);
+        this.props.cookies.set('currentPlayer', this.state.currentPlayer);
     }
 
-    addPlayerVote(sessionId, currentPlayer) {
-        fire.database().ref('/sessions/' + sessionId + '/votes/' + currentPlayer.name).set(currentPlayer.preferredGame);
-    }
 
     createNewSession() {
         let session = fire.database().ref('/sessions').push();
@@ -109,9 +99,9 @@ class App extends Component {
     }
 
     render() {
-        const sessionIdDisplay = <p>Session #{this.state.sessionId}</p>;
-        const selectedGameDisplay = <p>We're playing {this.state.selectedGame}</p>;
-        const currentPlayerDisplay =  <p>Thanks, {this.state.currentPlayer.name} for your submission.</p>;
+        const sessionIdDisplay = <p>Session #{this.state.session.id}</p>;
+        const selectedGameDisplay = <p>We're playing {this.state.session.selectedGame}</p>;
+        const currentPlayerDisplay = <p>Thanks, {this.state.currentPlayer.name} for your submission.</p>;
         const remainingPlayersDisplay = <p>Waiting on votes from: {this.state.players.join(', ')}.</p>;
         const votingForm = (<div>
             <div>
@@ -144,7 +134,7 @@ class App extends Component {
                 {sessionIdDisplay}
                 {this.state.players.length > 0 && remainingPlayersDisplay}
                 {this.state.currentPlayer.hasVoted ? currentPlayerDisplay : votingForm}
-                {this.state.selectedGame !== null && selectedGameDisplay}
+                {!this.state.session.selectedGame || selectedGameDisplay}
             </header>
         </div>);
     }
