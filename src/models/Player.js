@@ -2,13 +2,17 @@ import fire from '../firebase';
 
 
 class Player {
-    constructor() {
-        this.name = null;
+    constructor(name) {
+        this.name = name;
         this.hasVoted = false;
     }
     chooseName(name) {
         if(name == null) throw Error("player name cannot be null");
         this.name = name;
+    }
+
+    recallVotingHistory(session) {
+        this.hasVoted = session.votes && session.votes[this.name] !== undefined;
     }
 
     registerPreferencesForSession(sessionId, preferredGame) {
@@ -30,7 +34,7 @@ class Player {
 }
 
 const PlayerBuilder = {
-    build: () => new Player()
+    build: (name) => new Player(name)
 };
 
 export default PlayerBuilder;

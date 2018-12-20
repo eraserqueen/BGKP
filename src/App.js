@@ -13,17 +13,20 @@ class App extends Component {
 
     constructor(props) {
         super(props);
+
+        const cachedPlayerName = props.cookies.get('playerName');
+        const currentPlayer = PlayerBuilder.build(cachedPlayerName);
         this.state = {
             players: [],
             games: [],
-            currentPlayer: props.cookies.get('currentPlayer') || PlayerBuilder.build(),
+            currentPlayer,
             session: {
                 id: null,
                 votes: [],
                 selectedGame: null
             },
             form: {
-                player: null,
+                player: currentPlayer.name,
                 game: null
             }
         };
@@ -48,6 +51,7 @@ class App extends Component {
             if (sessionRef) {
                 session = _.values(sessionRef)[0];
                 console.log('found latest session:', session);
+                this.state.currentPlayer.recallVotingHistory(session);
                 let remainingPlayers = _.pullAll(this.state.players, _.keys(session.votes));
                 if (remainingPlayers.length === 0) {
                     session.selectedGame = this.computeGameDecision(session.id, session.votes);
@@ -72,7 +76,7 @@ class App extends Component {
     handleSubmit() {
         this.state.currentPlayer.chooseName(this.state.form.player);
         this.state.currentPlayer.registerPreferencesForSession(this.state.session.id, this.state.form.game);
-        this.props.cookies.set('currentPlayer', this.state.currentPlayer);
+        this.props.cookies.set('playerName', this.state.currentPlayer.name);
     }
 
 
@@ -106,14 +110,16 @@ class App extends Component {
         const votingForm = (<div>
             <div>
                 My name is:
-                {this.state.players.map((name, i) =>
-                    (<div key={'player-' + i}>
-                        <input
-                            type="radio" id={'player-' + i} name="current-player" value={name}
-                            onClick={() => this.handlePlayerSelected(name)}/>
-                        <label htmlFor={'player-' + i}>{name}</label>
-                    </div>)
-                )}
+                {this.state.currentPlayer.name != null ?
+                    this.state.currentPlayer.name
+                    : this.state.players.map((name, i) =>
+                        (<div key={'player-' + i}>
+                            <input
+                                type="radio" id={'player-' + i} name="current-player" value={name}
+                                onClick={() => this.handlePlayerSelected(name)}/>
+                            <label htmlFor={'player-' + i}>{name}</label>
+                        </div>)
+                    )}
             </div>
             <div>
                 And I want to play:
