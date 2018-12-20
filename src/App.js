@@ -5,6 +5,7 @@ import {Cookies, withCookies} from 'react-cookie';
 import './App.css';
 import fire from './firebase';
 import PlayerBuilder from './models/Player'
+import DecisionEngine from './models/DecisionEngine'
 
 class App extends Component {
     static propTypes = {
@@ -54,7 +55,7 @@ class App extends Component {
                 this.state.currentPlayer.recallVotingHistory(session);
                 let remainingPlayers = _.pullAll(this.state.players, _.keys(session.votes));
                 if (remainingPlayers.length === 0) {
-                    session.selectedGame = this.computeGameDecision(session.id, session.votes);
+                    session.selectedGame = DecisionEngine.selectGame(session);
                 }
                 this.setState({session, players: remainingPlayers});
             } else {
@@ -90,17 +91,6 @@ class App extends Component {
         return key;
     }
 
-    computeGameDecision(sessionId, votes) {
-        if (votes.length === 0) return;
-        let computedList =
-            _.orderBy(
-                _.map(
-                    _.groupBy(
-                        _.values(votes), _.identity), v => ({name: v[0], count: v.length})), 'count', 'desc');
-        let selectedGame = computedList[0].name;
-        fire.database().ref('/sessions/' + sessionId).update({selectedGame});
-        return selectedGame;
-    }
 
     render() {
         const sessionIdDisplay = <p>Session #{this.state.session.id}</p>;
