@@ -33,8 +33,4 @@ class Player {
     }
 }
 
-const PlayerBuilder = {
-    build: (name) => new Player(name)
-};
-
-export default PlayerBuilder;
+export default Player;

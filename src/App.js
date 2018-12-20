@@ -4,7 +4,7 @@ import React, {Component} from 'react';
 import {Cookies, withCookies} from 'react-cookie';
 import './App.css';
 import fire from './firebase';
-import PlayerBuilder from './models/Player'
+import Player from './models/Player'
 import DecisionEngine from './models/DecisionEngine'
 
 class App extends Component {
@@ -16,7 +16,7 @@ class App extends Component {
         super(props);
 
         const cachedPlayerName = props.cookies.get('playerName');
-        const currentPlayer = PlayerBuilder.build(cachedPlayerName);
+        const currentPlayer = new Player(cachedPlayerName);
         this.state = {
             players: [],
             games: [],
