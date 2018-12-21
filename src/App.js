@@ -38,16 +38,13 @@ class App extends Component {
             if (sessionRef) {
                 const sessionData = _.values(sessionRef)[0];
                 session = new Session(sessionData);
-            }
-            else {
-                session = new Session();
-            }
 
-            if (!session.selectedGame && session.hasAllRequiredVotes()) {
-                session.selectedGame = DecisionEngine.selectGame(session);
-            } else {
-                this.loadAvailableGames();
-                this.loadPlayers(session);
+                if (!session.selectedGame && session.hasAllRequiredVotes()) {
+                    session.selectedGame = DecisionEngine.selectGame(session);
+                } else {
+                    this.loadAvailableGames();
+                    this.loadPlayers(session);
+                }
             }
             this.setState({session, loading: false});
         })
@@ -78,6 +75,12 @@ class App extends Component {
             });
     }
 
+    handleCreateSessionClick() {
+        const session = new Session();
+        this.loadAvailableGames();
+        this.loadPlayers(session);
+        this.setState({session: session, loading:false});
+    }
 
     handlePlayerSelected(player) {
         this.setState({form: _.assign(this.state.form, {player})});
@@ -97,9 +100,17 @@ class App extends Component {
         this.setState({currentPlayer});
     }
 
+
     render() {
         if (this.state.loading) {
             return <div>Loading...</div>;
+        }
+        if(this.state.session == null) {
+            return <div className="App">
+                <header className="App-header">
+                    <button onClick={() => this.handleCreateSessionClick()}>Create new Session</button>
+                </header>
+            </div>
         }
         return <div className="App">
             <header className="App-header">

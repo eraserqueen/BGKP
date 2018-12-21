@@ -1,22 +1,20 @@
 import fire from '../firebase'
 
 class Session {
-    constructor(data = null) {
-        const {id, created, votes = [], selectedGame = null} = data;
-        if (id) {
-            console.log('loading existing session', id);
+    constructor(data = {}) {
+        if (data.id) {
+            console.log('loading existing session', data.id);
         } else {
             let session = fire.database().ref('/sessions').push();
-            let id = session.key;
-            let created = new Date().toISOString();
-            session.set({id, created, votes, selectedGame});
-            console.log('created new session', id);
+            data.id = session.key;
+            data.created = new Date().toISOString();
+            session.set(data);
+            console.log('created new session', data.id);
         }
-        this.id = id;
-        this.created = created;
-        this.votes = votes;
-        this.selectedGame = selectedGame;
-
+        this.id = data.id;
+        this.created = data.created;
+        this.votes = data.votes || [];
+        this.selectedGame = data.selectedGame || null;
     }
 
     hasAllRequiredVotes() {
