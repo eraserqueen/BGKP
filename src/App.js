@@ -4,8 +4,9 @@ import React, {Component} from 'react';
 import {Cookies, withCookies} from 'react-cookie';
 import './App.css';
 import fire from './firebase';
-import Player from './models/Player'
 import DecisionEngine from './models/DecisionEngine'
+import Player, {loadExistingPlayer} from './models/Player'
+import Session from "./models/Session";
 
 class App extends Component {
     static propTypes = {
@@ -15,56 +16,68 @@ class App extends Component {
     constructor(props) {
         super(props);
 
-        const cachedPlayerName = props.cookies.get('playerName');
-        const currentPlayer = new Player(cachedPlayerName);
         this.state = {
+            loading: true,
             players: [],
             games: [],
-            currentPlayer,
-            session: {
-                id: null,
-                votes: [],
-                selectedGame: null
-            },
+            currentPlayer: null,
+            session: null,
             form: {
-                player: currentPlayer.name,
+                player: null,
                 game: null
             }
         };
     }
 
+
     componentWillMount() {
 
+        fire.database().ref('/sessions').orderByChild('created').limitToFirst(1).on('value', snapshot => {
+            let session = null;
+            let sessionRef = snapshot.val();
+            if (sessionRef) {
+                const sessionData = _.values(sessionRef)[0];
+                session = new Session(sessionData);
+            }
+            else {
+                session = new Session();
+            }
+
+            if (!session.selectedGame && session.hasAllRequiredVotes()) {
+                session.selectedGame = DecisionEngine.selectGame(session);
+            } else {
+                this.loadAvailableGames();
+                this.loadPlayers(session);
+            }
+            this.setState({session, loading: false});
+        })
+    }
+
+    loadPlayers(session) {
+        const cachedPlayerName = this.props.cookies.get('playerName');
+        if (!_.isEmpty(cachedPlayerName)) {
+            let currentPlayer = loadExistingPlayer(cachedPlayerName, session);
+            this.setState({currentPlayer, form: {player: currentPlayer.name, game: null}});
+        } else {
+            this.setState({currentPlayer: new Player()});
+        }
+
+        fire.database().ref('/players').orderByValue().once('value')
+            .then(snapshot => {
+                let players = snapshot.val().filter(p => p != null);
+                _.pullAll(players, _.keys(session.votes));
+                this.setState({players});
+            });
+    }
+
+    loadAvailableGames() {
         fire.database().ref('/games').orderByValue().once('value')
             .then(snapshot => {
                 let games = snapshot.val().filter(p => p != null);
                 this.setState({games});
             });
-        fire.database().ref('/players').orderByValue().once('value')
-            .then(snapshot => {
-                let players = snapshot.val().filter(p => p != null);
-                this.setState({players});
-            });
-
-        fire.database().ref('/sessions').orderByChild('created').limitToFirst(1).on('value', snapshot => {
-            let session = {};
-            let sessionRef = snapshot.val();
-            if (sessionRef) {
-                session = _.values(sessionRef)[0];
-                console.log('found latest session:', session);
-                this.state.currentPlayer.recallVotingHistory(session);
-                let remainingPlayers = _.pullAll(this.state.players, _.keys(session.votes));
-                if (remainingPlayers.length === 0) {
-                    session.selectedGame = DecisionEngine.selectGame(session);
-                }
-                this.setState({session, players: remainingPlayers});
-            } else {
-                session.id = this.createNewSession();
-                console.log('created new session', session);
-            }
-            this.setState({session});
-        });
     }
+
 
     handlePlayerSelected(player) {
         this.setState({form: _.assign(this.state.form, {player})});
@@ -75,29 +88,38 @@ class App extends Component {
     }
 
     handleSubmit() {
-        this.state.currentPlayer.chooseName(this.state.form.player);
-        this.state.currentPlayer.registerPreferencesForSession(this.state.session.id, this.state.form.game);
-        this.props.cookies.set('playerName', this.state.currentPlayer.name);
+        const currentPlayer = this.state.currentPlayer;
+        if (currentPlayer.name === null) {
+            currentPlayer.chooseName(this.state.form.player);
+            this.props.cookies.set('playerName', currentPlayer.name);
+        }
+        currentPlayer.vote(this.state.session, this.state.form.game);
+        this.setState({currentPlayer});
     }
-
-
-    createNewSession() {
-        let session = fire.database().ref('/sessions').push();
-        let key = session.key;
-        session.set({
-            id: key,
-            created: new Date().toISOString()
-        });
-        return key;
-    }
-
 
     render() {
-        const sessionIdDisplay = <p>Session #{this.state.session.id}</p>;
-        const selectedGameDisplay = <p>We're playing {this.state.session.selectedGame}</p>;
-        const currentPlayerDisplay = <p>Thanks, {this.state.currentPlayer.name} for your submission.</p>;
-        const remainingPlayersDisplay = <p>Waiting on votes from: {this.state.players.join(', ')}.</p>;
-        const votingForm = (<div>
+        if (this.state.loading) {
+            return <div>Loading...</div>;
+        }
+        return <div className="App">
+            <header className="App-header">
+                {<p>Session #{this.state.session.id} | {this.state.session.created}</p>}
+                {this.renderContent()}
+            </header>
+        </div>;
+    }
+
+    renderContent() {
+        if (this.state.session.selectedGame) {
+            return <p>We're playing {this.state.session.selectedGame}</p>;
+        }
+        if (this.state.currentPlayer.hasVoted) {
+            return <div>
+                <p>Thanks, {this.state.currentPlayer.name} for your submission.</p>
+                <p>Waiting on votes from: {this.state.players.join(', ')}.</p>
+            </div>;
+        }
+        return <div>
             <div>
                 My name is:
                 {this.state.currentPlayer.name != null ?
@@ -123,16 +145,7 @@ class App extends Component {
                 )}
             </div>
             <button onClick={() => this.handleSubmit()}>Send</button>
-        </div>);
-
-        return (<div className="App">
-            <header className="App-header">
-                {sessionIdDisplay}
-                {this.state.players.length > 0 && remainingPlayersDisplay}
-                {this.state.currentPlayer.hasVoted ? currentPlayerDisplay : votingForm}
-                {!this.state.session.selectedGame || selectedGameDisplay}
-            </header>
-        </div>);
+        </div>;
     }
 }
 

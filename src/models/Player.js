@@ -1,23 +1,21 @@
-import fire from '../firebase';
-
-
 class Player {
-    constructor(name) {
+    constructor(name = null) {
         this.name = name;
         this.hasVoted = false;
     }
+
     chooseName(name) {
-        if(name == null) throw Error("player name cannot be null");
+        if (name == null) throw Error("player name cannot be null");
         this.name = name;
     }
 
-    recallVotingHistory(session) {
+    checkVotingStatus(session) {
         this.hasVoted = session.votes && session.votes[this.name] !== undefined;
     }
 
-    registerPreferencesForSession(sessionId, preferredGame) {
-        if (sessionId == null) {
-            throw Error("sessionId cannot be null");
+    vote(session, preferredGame) {
+        if (session == null) {
+            throw Error("session cannot be null");
         }
         if (preferredGame == null) {
             throw Error("preferred game cannot be null");
@@ -26,11 +24,18 @@ class Player {
             throw Error("player name cannot be null");
         }
         if (this.hasVoted) {
-            throw Error("player has already registered their vote for this session");
+            throw Error(this.name + " has already voted for this session");
         }
+        session.registerVote(this.name, preferredGame);
         this.hasVoted = true;
-        return fire.database().ref('/sessions/' + sessionId + '/votes/' + this.name).set(preferredGame);
     }
 }
 
+function loadExistingPlayer(name, session) {
+    let player = new Player(name);
+    player.checkVotingStatus(session);
+    return player;
+}
+
 export default Player;
+export {loadExistingPlayer}
