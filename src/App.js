@@ -1,8 +1,8 @@
+import './App.css';
 import _ from 'lodash';
 import {instanceOf} from 'prop-types';
 import React, {Component} from 'react';
 import {Cookies, withCookies} from 'react-cookie';
-import './App.css';
 import fire from './firebase';
 import DecisionEngine from './models/DecisionEngine'
 import Player, {loadExistingPlayer} from './models/Player'
@@ -23,6 +23,7 @@ class App extends Component {
             currentPlayer: null,
             session: null,
             form: {
+                error: null,
                 player: null,
                 game: null
             }
@@ -79,7 +80,7 @@ class App extends Component {
         const session = new Session();
         this.loadAvailableGames();
         this.loadPlayers(session);
-        this.setState({session: session, loading:false});
+        this.setState({session: session, loading: false});
     }
 
     handlePlayerSelected(player) {
@@ -90,37 +91,41 @@ class App extends Component {
         this.setState({form: _.assign(this.state.form, {game})});
     }
 
-    handleSubmit() {
-        const currentPlayer = this.state.currentPlayer;
-        if (currentPlayer.name === null) {
-            currentPlayer.chooseName(this.state.form.player);
-            this.props.cookies.set('playerName', currentPlayer.name);
+    handleSubmit(e) {
+        e.preventDefault();
+        try {
+            const currentPlayer = this.state.currentPlayer;
+            if (currentPlayer.name === null) {
+                currentPlayer.chooseName(this.state.form.player);
+                this.props.cookies.set('playerName', currentPlayer.name);
+            }
+            currentPlayer.vote(this.state.session, this.state.form.game);
+            this.setState({currentPlayer, form: _.assign(this.state.form, {error: null})});
+        } catch (error) {
+            this.setState({form: _.assign(this.state.form, {error: error.message})});
         }
-        currentPlayer.vote(this.state.session, this.state.form.game);
-        this.setState({currentPlayer});
     }
 
 
     render() {
-        if (this.state.loading) {
-            return <div>Loading...</div>;
-        }
-        if(this.state.session == null) {
-            return <div className="App">
-                <header className="App-header">
-                    <button onClick={() => this.handleCreateSessionClick()}>Create new Session</button>
-                </header>
-            </div>
-        }
         return <div className="App">
-            <header className="App-header">
-                {<p>Session #{this.state.session.id} | {this.state.session.created}</p>}
+            <header className="App-header display-1">BGKP</header>
+            <main className='container'>
+                {this.state.session &&
+                <div className='row'>Session #{this.state.session.id} | {this.state.session.created}</div>}
                 {this.renderContent()}
-            </header>
+            </main>
         </div>;
     }
 
     renderContent() {
+        if (this.state.loading) {
+            return <div>Loading...</div>;
+        }
+        if (this.state.session == null) {
+            return <button className='btn btn-primary' onClick={() => this.handleCreateSessionClick()}>Create new
+                Session</button>;
+        }
         if (this.state.session.selectedGame) {
             return <p>We're playing {this.state.session.selectedGame}</p>;
         }
@@ -130,33 +135,46 @@ class App extends Component {
                 <p>Waiting on votes from: {this.state.players.join(', ')}.</p>
             </div>;
         }
-        return <div>
-            <div>
-                My name is:
-                {this.state.currentPlayer.name != null ?
-                    this.state.currentPlayer.name
-                    : this.state.players.map((name, i) =>
-                        (<div key={'player-' + i}>
-                            <input
-                                type="radio" id={'player-' + i} name="current-player" value={name}
-                                onClick={() => this.handlePlayerSelected(name)}/>
-                            <label htmlFor={'player-' + i}>{name}</label>
-                        </div>)
-                    )}
+        return <form>
+            {this.state.form.error && <div className='alert alert-danger'>{this.state.form.error}</div>}
+            <div className='form-group row'>
+                <label className='col text-left'>My name is:</label>
+
+                {this.state.currentPlayer.name != null
+                    ? <div className='col '>{this.state.currentPlayer.name}</div>
+                    : <div className='col btn-group btn-group-toggle' role='group'>
+                        {this.state.players.map((name, i) =>
+                            (<label key={'player-' + i}
+                                    aria-pressed={this.state.form.player === name}
+                                    role='button'
+                                    className={`btn btn-outline-info ${this.state.form.player === name ? 'active' : ''}`}>
+                                    <input
+                                        type="radio" id={'player-' + i} name="current-player" value={name}
+                                        className='d-none form-check-input'
+                                        onClick={() => this.handlePlayerSelected(name)}/>
+                                    {name}
+                                </label>
+                            )
+                        )}
+                    </div>}
             </div>
-            <div>
-                And I want to play:
-                {this.state.games.map((name, i) =>
-                    (<div key={'game-' + i}>
-                        <input
-                            type="radio" id={'game-' + i} name="selected-game" value={name}
-                            onClick={() => this.handleGameSelected(name)}/>
-                        <label htmlFor={'game-' + i}>{name}</label>
-                    </div>)
-                )}
+            <div className='form-group row'>
+                <label className='col text-left'>And I want to play:</label>
+                <select className='col form-control' onChange={(e) => this.handleGameSelected(e.target.value)}
+                        name="selected-game">
+                    <option/>
+                    {this.state.games.map((name, i) => <option key={'game-' + i} value={name}>{name} </option>)}
+                </select>
             </div>
-            <button onClick={() => this.handleSubmit()}>Send</button>
-        </div>;
+            <div className='form-group row'>
+                <div className='col'/>
+                <div className='col'>
+                    <button onClick={(e) => this.handleSubmit(e)}
+                            className='form-control btn btn-block btn-primary'>Send
+                    </button>
+                </div>
+            </div>
+        </form>;
     }
 }
 
