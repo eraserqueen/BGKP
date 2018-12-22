@@ -3,6 +3,8 @@ import _ from 'lodash';
 import {instanceOf} from 'prop-types';
 import React, {Component} from 'react';
 import {Cookies, withCookies} from 'react-cookie';
+import GameSelector from "./components/GameSelector";
+import PlayerSelector from "./components/PlayerSelector";
 import fire from './firebase';
 import DecisionEngine from './models/DecisionEngine'
 import Player, {loadExistingPlayer} from './models/Player'
@@ -135,36 +137,27 @@ class App extends Component {
                 <p>Waiting on votes from: {this.state.players.join(', ')}.</p>
             </div>;
         }
+
         return <form>
             {this.state.form.error && <div className='alert alert-danger'>{this.state.form.error}</div>}
             <div className='form-group row'>
                 <label className='col text-left'>My name is:</label>
-
                 {this.state.currentPlayer.name != null
-                    ? <div className='col '>{this.state.currentPlayer.name}</div>
-                    : <div className='col btn-group btn-group-toggle' role='group'>
-                        {this.state.players.map((name, i) =>
-                            (<label key={'player-' + i}
-                                    aria-pressed={this.state.form.player === name}
-                                    role='button'
-                                    className={`btn btn-outline-info ${this.state.form.player === name ? 'active' : ''}`}>
-                                    <input
-                                        type="radio" id={'player-' + i} name="current-player" value={name}
-                                        className='d-none form-check-input'
-                                        onClick={() => this.handlePlayerSelected(name)}/>
-                                    {name}
-                                </label>
-                            )
-                        )}
+                    ? <div className='col'>{this.state.currentPlayer.name}</div>
+                    : <div className='col'>
+                        <PlayerSelector
+                            players={this.state.players}
+                            selected={this.state.form.player}
+                            onSelected={(player) => this.handlePlayerSelected(player)} />
                     </div>}
             </div>
             <div className='form-group row'>
                 <label className='col text-left'>And I want to play:</label>
-                <select className='col form-control' onChange={(e) => this.handleGameSelected(e.target.value)}
-                        name="selected-game">
-                    <option/>
-                    {this.state.games.map((name, i) => <option key={'game-' + i} value={name}>{name} </option>)}
-                </select>
+                <div className='col'>
+                    <GameSelector
+                        games={this.state.games}
+                        onSelected={(game) => this.handleGameSelected(game)} />
+                </div>
             </div>
             <div className='form-group row'>
                 <div className='col'/>
