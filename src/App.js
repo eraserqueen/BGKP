@@ -3,8 +3,7 @@ import _ from 'lodash';
 import {instanceOf} from 'prop-types';
 import React, {Component} from 'react';
 import {Cookies, withCookies} from 'react-cookie';
-import GameSelector from "./components/GameSelector";
-import PlayerSelector from "./components/PlayerSelector";
+import VotingForm from "./components/VotingForm";
 import fire from './firebase';
 import DecisionEngine from './models/DecisionEngine'
 import Player, {loadExistingPlayer} from './models/Player'
@@ -24,11 +23,6 @@ class App extends Component {
             games: [],
             currentPlayer: null,
             session: null,
-            form: {
-                error: null,
-                player: null,
-                game: null
-            }
         };
     }
 
@@ -41,8 +35,8 @@ class App extends Component {
             if (sessionRef) {
                 const sessionData = _.values(sessionRef)[0];
                 session = new Session(sessionData);
-
-                if (!session.selectedGame && session.hasAllRequiredVotes()) {
+                console.log(session, session.hasAllRequiredVotes());
+                if (session.selectedGame === null && session.hasAllRequiredVotes()) {
                     session.selectedGame = DecisionEngine.selectGame(session);
                 } else {
                     this.loadAvailableGames();
@@ -85,29 +79,18 @@ class App extends Component {
         this.setState({session: session, loading: false});
     }
 
-    handlePlayerSelected(player) {
-        this.setState({form: _.assign(this.state.form, {player})});
-    }
-
-    handleGameSelected(game) {
-        this.setState({form: _.assign(this.state.form, {game})});
-    }
-
-    handleSubmit(e) {
-        e.preventDefault();
+    handlePlayerVote({player, game}) {
         try {
             const currentPlayer = this.state.currentPlayer;
-            if (currentPlayer.name === null) {
-                currentPlayer.chooseName(this.state.form.player);
-                this.props.cookies.set('playerName', currentPlayer.name);
-            }
-            currentPlayer.vote(this.state.session, this.state.form.game);
-            this.setState({currentPlayer, form: _.assign(this.state.form, {error: null})});
+            currentPlayer.chooseName(player);
+            currentPlayer.vote(this.state.session, game);
+
+            this.props.cookies.set('playerName', player);
+            this.setState({currentPlayer});
         } catch (error) {
-            this.setState({form: _.assign(this.state.form, {error: error.message})});
+            this.setState({error: error.message});
         }
     }
-
 
     render() {
         return <div className="App">
@@ -125,11 +108,12 @@ class App extends Component {
             return <div>Loading...</div>;
         }
         if (this.state.session == null) {
-            return <button className='btn btn-primary' onClick={() => this.handleCreateSessionClick()}>Create new
-                Session</button>;
+            return <button className='btn btn-primary' onClick={() => this.handleCreateSessionClick()}>
+                Create new Session
+            </button>;
         }
         if (this.state.session.selectedGame) {
-            return <p>We're playing {this.state.session.selectedGame}</p>;
+            return <div>We're playing {this.state.session.selectedGame}</div>;
         }
         if (this.state.currentPlayer.hasVoted) {
             return <div>
@@ -138,36 +122,10 @@ class App extends Component {
             </div>;
         }
 
-        return <form>
-            {this.state.form.error && <div className='alert alert-danger'>{this.state.form.error}</div>}
-            <div className='form-group row'>
-                <label className='col text-left'>My name is:</label>
-                {this.state.currentPlayer.name != null
-                    ? <div className='col'>{this.state.currentPlayer.name}</div>
-                    : <div className='col'>
-                        <PlayerSelector
-                            players={this.state.players}
-                            selected={this.state.form.player}
-                            onSelected={(player) => this.handlePlayerSelected(player)} />
-                    </div>}
-            </div>
-            <div className='form-group row'>
-                <label className='col text-left'>And I want to play:</label>
-                <div className='col'>
-                    <GameSelector
-                        games={this.state.games}
-                        onSelected={(game) => this.handleGameSelected(game)} />
-                </div>
-            </div>
-            <div className='form-group row'>
-                <div className='col'/>
-                <div className='col'>
-                    <button onClick={(e) => this.handleSubmit(e)}
-                            className='form-control btn btn-block btn-primary'>Send
-                    </button>
-                </div>
-            </div>
-        </form>;
+        return <VotingForm error={this.state.error}
+                           players={this.state.players}
+                           games={this.state.games}
+                           onSubmit={(vote) => this.handlePlayerVote(vote)}/>;
     }
 }
 

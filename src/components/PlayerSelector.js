@@ -22,7 +22,10 @@ class PlayerSelector extends Component {
                         <input
                             type="radio" id={'player-' + i} name="selected-player" value={name}
                             className='d-none form-check-input'
-                            onClick={() => this.props.onSelected(name)}/>
+                            onClick={() => {
+                                this.setState({selected: name});
+                                this.props.onSelected(name);
+                            }}/>
                         {name}
                     </label>
                 )
