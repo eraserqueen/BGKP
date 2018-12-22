@@ -18,7 +18,7 @@ class App extends Component {
         super(props);
 
         this.state = {
-            loading: true,
+            loading: {players: true, games: true, session: true},
             players: [],
             games: [],
             currentPlayer: null,
@@ -28,14 +28,13 @@ class App extends Component {
 
 
     componentWillMount() {
-
         fire.database().ref('/sessions').orderByChild('created').limitToFirst(1).on('value', snapshot => {
             let session = null;
             let sessionRef = snapshot.val();
             if (sessionRef) {
                 const sessionData = _.values(sessionRef)[0];
                 session = new Session(sessionData);
-                console.log(session, session.hasAllRequiredVotes());
+
                 if (session.selectedGame === null && session.hasAllRequiredVotes()) {
                     session.selectedGame = DecisionEngine.selectGame(session);
                 } else {
@@ -43,7 +42,7 @@ class App extends Component {
                     this.loadPlayers(session);
                 }
             }
-            this.setState({session, loading: false});
+            this.setState({session, loading: _.assign(this.state.loading, {session:false})});
         })
     }
 
@@ -59,8 +58,9 @@ class App extends Component {
         fire.database().ref('/players').orderByValue().once('value')
             .then(snapshot => {
                 let players = snapshot.val().filter(p => p != null);
+                players.sort();
                 _.pullAll(players, _.keys(session.votes));
-                this.setState({players});
+                this.setState({players, loading: _.assign(this.state.loading, {players:false})});
             });
     }
 
@@ -68,24 +68,29 @@ class App extends Component {
         fire.database().ref('/games').orderByValue().once('value')
             .then(snapshot => {
                 let games = snapshot.val().filter(p => p != null);
-                this.setState({games});
+                games.sort();
+                this.setState({games, loading: _.assign(this.state.loading, {games:false})});
             });
+    }
+
+    appIsLoading() {
+        return _.filter(this.state.loading, _.identity).length > 0;
     }
 
     handleCreateSessionClick() {
         const session = new Session();
         this.loadAvailableGames();
         this.loadPlayers(session);
-        this.setState({session: session, loading: false});
+        this.setState({session: session, loading: _.assign(this.state.loading, {session:false})});
     }
 
-    handlePlayerVote({player, game}) {
+    handlePlayerVote({playerName, selectedGames}) {
         try {
             const currentPlayer = this.state.currentPlayer;
-            currentPlayer.chooseName(player);
-            currentPlayer.vote(this.state.session, game);
+            currentPlayer.chooseName(playerName);
+            currentPlayer.vote(this.state.session, selectedGames);
 
-            this.props.cookies.set('playerName', player);
+            this.props.cookies.set('playerName', playerName);
             this.setState({currentPlayer});
         } catch (error) {
             this.setState({error: error.message});
@@ -104,7 +109,7 @@ class App extends Component {
     }
 
     renderContent() {
-        if (this.state.loading) {
+        if (this.appIsLoading()) {
             return <div>Loading...</div>;
         }
         if (this.state.session == null) {

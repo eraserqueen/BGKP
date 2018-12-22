@@ -13,12 +13,12 @@ class Player {
         this.hasVoted = session.votes && session.votes[this.name] !== undefined;
     }
 
-    vote(session, preferredGame) {
+    vote(session, selectedGames) {
         if (session == null) {
             throw Error("session cannot be null");
         }
-        if (preferredGame == null) {
-            throw Error("preferred game cannot be null");
+        if (selectedGames == null) {
+            throw Error("preferred games cannot be null");
         }
         if (this.name == null) {
             throw Error("player name cannot be null");
@@ -26,7 +26,7 @@ class Player {
         if (this.hasVoted) {
             throw Error(this.name + " has already voted for this session");
         }
-        session.registerVote(this.name, preferredGame);
+        session.registerVote(this.name, selectedGames);
         this.hasVoted = true;
     }
 }

@@ -22,18 +22,18 @@ class Session {
         return _.values(this.votes).length === 4;
     }
 
-    registerVote(playerName, preferredGame) {
+    registerVote(playerName, preferredGames) {
         if (playerName == null) {
             throw Error("player name cannot be null");
         }
-        if (preferredGame == null) {
+        if (preferredGames == null) {
             throw Error("preferred game cannot be null");
         }
         if (this.votes[playerName] !== undefined) {
             throw Error(playerName + " has already voted for this session");
         }
 
-        this.votes[playerName] = preferredGame;
+        this.votes[playerName] = preferredGames;
         fire.database().ref('/sessions/' + this.id + '/votes').set(this.votes);
 
         console.log('updated votes', this.votes)

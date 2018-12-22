@@ -7,13 +7,24 @@ class GameSelector extends Component {
         onSelected: PropTypes.func.isRequired
     };
 
+    constructor(props) {
+        super(props);
+        this.state = {selected: ''}
+    }
+
     render() {
         return <select className='form-control'
-                       onChange={(e) => this.props.onSelected(e.target.value)}
-                       name="selected-game">
+                       onChange={(e) => {
+                           const selected = e.target.value;
+                           this.setState({selected});
+                           return this.props.onSelected(selected);
+                       }}
+                       name="selected-game"
+                       value={this.state.selected}>
             <option/>
             {this.props.games.map((name, i) => <option key={'game-' + i} value={name}>{name} </option>)}
         </select>;
     }
 }
+
 export default GameSelector;
