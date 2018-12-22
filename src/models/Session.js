@@ -1,4 +1,5 @@
 import fire from '../firebase'
+import _ from 'lodash';
 
 class Session {
     constructor(data = {}) {
@@ -18,7 +19,7 @@ class Session {
     }
 
     hasAllRequiredVotes() {
-        return this.votes.length === 4;
+        return _.values(this.votes).length === 4;
     }
 
     registerVote(playerName, preferredGame) {
