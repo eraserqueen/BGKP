@@ -29,7 +29,7 @@ class App extends Component {
 
 
     componentWillMount() {
-        fire.database().ref('/sessions').orderByChild('created').limitToFirst(1).on('value', snapshot => {
+        fire.database().ref('/sessions').orderByChild('created').limitToLast(1).on('value', snapshot => {
             let session = null;
             let sessionRef = snapshot.val();
             if (sessionRef) {
@@ -119,7 +119,12 @@ class App extends Component {
             </button>;
         }
         if (this.state.session.selectedGames) {
-            return <VotingResults games={this.state.session.selectedGames}/>;
+            return <div>
+                <VotingResults games={this.state.session.selectedGames}/>
+                <button className='btn btn-primary' onClick={() => this.handleCreateSessionClick()}>
+                    Create new Session
+                </button>
+            </div>
         }
         if (this.state.currentPlayer.hasVoted) {
             return <div>
