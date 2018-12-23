@@ -70,9 +70,9 @@ class App extends Component {
     }
 
     loadAvailableGames() {
-        fire.database().ref('/games').orderByValue().once('value')
+        fire.database().ref('/games').once('value')
             .then(snapshot => {
-                let games = snapshot.val().filter(p => p != null);
+                let games = snapshot.val().filter(p => p != null).map(g => g.title);
                 games.sort();
                 this.setState({games, loading: _.assign(this.state.loading, {games: false})});
             });
