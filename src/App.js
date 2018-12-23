@@ -35,14 +35,14 @@ class App extends Component {
                 const sessionData = _.values(sessionRef)[0];
                 session = new Session(sessionData);
 
-                if (session.selectedGame === null && session.hasAllRequiredVotes()) {
+                if (_.isEmpty(session.selectedGame) && session.hasAllRequiredVotes()) {
                     session.selectedGame = DecisionEngine.selectGame(session);
                 } else {
                     this.loadAvailableGames();
                     this.loadPlayers(session);
                 }
+                this.setState({session, loading: _.assign(this.state.loading, {session: false})});
             }
-            this.setState({session, loading: _.assign(this.state.loading, {session:false})});
         })
     }
 
@@ -60,7 +60,7 @@ class App extends Component {
                 let players = snapshot.val().filter(p => p != null);
                 players.sort();
                 _.pullAll(players, _.keys(session.votes));
-                this.setState({players, loading: _.assign(this.state.loading, {players:false})});
+                this.setState({players, loading: _.assign(this.state.loading, {players: false})});
             });
     }
 
@@ -69,19 +69,19 @@ class App extends Component {
             .then(snapshot => {
                 let games = snapshot.val().filter(p => p != null);
                 games.sort();
-                this.setState({games, loading: _.assign(this.state.loading, {games:false})});
+                this.setState({games, loading: _.assign(this.state.loading, {games: false})});
             });
     }
 
     appIsLoading() {
-        return _.filter(this.state.loading, _.identity).length > 0;
+        return _.isEmpty(_.get(this.state.session, 'selectedGame')) && _.filter(this.state.loading, _.identity).length > 0;
     }
 
     handleCreateSessionClick() {
         const session = new Session();
         this.loadAvailableGames();
         this.loadPlayers(session);
-        this.setState({session: session, loading: _.assign(this.state.loading, {session:false})});
+        this.setState({session: session, loading: _.assign(this.state.loading, {session: false})});
     }
 
     handlePlayerVote({playerName, selectedGames}) {
