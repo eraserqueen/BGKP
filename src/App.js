@@ -3,12 +3,14 @@ import _ from 'lodash';
 import {instanceOf} from 'prop-types';
 import React, {Component} from 'react';
 import {Cookies, withCookies} from 'react-cookie';
+import moment from 'moment';
 import VotingForm from "./components/VotingForm";
 import VotingResults from "./components/VotingResults";
 import fire from './firebase';
 import DecisionEngine from './models/DecisionEngine'
 import Player, {loadExistingPlayer} from './models/Player'
 import Session from "./models/Session";
+
 
 class App extends Component {
     static propTypes = {
@@ -103,8 +105,7 @@ class App extends Component {
         return <div className="App">
             <header className="App-header display-1">BGKP</header>
             <main className='container'>
-                {this.state.session &&
-                <div className='row'>Session #{this.state.session.id} | {this.state.session.created}</div>}
+                {this.state.session && <h1>Gaming session of {moment(this.state.session.created).format('LL')}</h1>}
                 {this.renderContent()}
             </main>
         </div>;

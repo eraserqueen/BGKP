@@ -10,7 +10,7 @@ class VotingResults extends Component {
     render() {
         return <div>
             <h2> We're playing:</h2>
-            <ol>
+            <ol className='list-type'>
                 {_.map(_.reverse(_.sortBy(this.props.games, ['score'])), (result,i) =>
                     <li key={`result-${i}`}>{result.game} ({result.score})</li>)}
             </ol>
