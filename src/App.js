@@ -4,6 +4,7 @@ import {instanceOf} from 'prop-types';
 import React, {Component} from 'react';
 import {Cookies, withCookies} from 'react-cookie';
 import VotingForm from "./components/VotingForm";
+import VotingResults from "./components/VotingResults";
 import fire from './firebase';
 import DecisionEngine from './models/DecisionEngine'
 import Player, {loadExistingPlayer} from './models/Player'
@@ -35,8 +36,8 @@ class App extends Component {
                 const sessionData = _.values(sessionRef)[0];
                 session = new Session(sessionData);
 
-                if (_.isEmpty(session.selectedGame) && session.hasAllRequiredVotes()) {
-                    session.selectedGame = DecisionEngine.selectGame(session);
+                if (_.isEmpty(session.selectedGames) && session.hasAllRequiredVotes()) {
+                    session.selectedGames = DecisionEngine.getSelectedGames(session);
                 } else {
                     this.loadAvailableGames();
                     this.loadPlayers(session);
@@ -74,7 +75,7 @@ class App extends Component {
     }
 
     appIsLoading() {
-        return _.isEmpty(_.get(this.state.session, 'selectedGame')) && _.filter(this.state.loading, _.identity).length > 0;
+        return _.isEmpty(_.get(this.state.session, 'selectedGames')) && _.filter(this.state.loading, _.identity).length > 0;
     }
 
     handleCreateSessionClick() {
@@ -117,8 +118,8 @@ class App extends Component {
                 Create new Session
             </button>;
         }
-        if (this.state.session.selectedGame) {
-            return <div>We're playing {this.state.session.selectedGame}</div>;
+        if (this.state.session.selectedGames) {
+            return <VotingResults games={this.state.session.selectedGames}/>;
         }
         if (this.state.currentPlayer.hasVoted) {
             return <div>

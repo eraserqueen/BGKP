@@ -15,7 +15,7 @@ class Session {
         this.id = data.id;
         this.created = data.created;
         this.votes = data.votes || [];
-        this.selectedGame = data.selectedGame || null;
+        this.selectedGames = data.selectedGames || null;
     }
 
     hasAllRequiredVotes() {
