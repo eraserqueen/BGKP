@@ -48,20 +48,21 @@ class App extends Component {
     }
 
     loadPlayers(session) {
-        const cachedPlayerName = this.props.cookies.get('playerName');
-        if (!_.isEmpty(cachedPlayerName)) {
-            let currentPlayer = loadExistingPlayer(cachedPlayerName, session);
-            this.setState({currentPlayer, form: {player: currentPlayer.name, game: null}});
-        } else {
-            this.setState({currentPlayer: new Player()});
-        }
-
         fire.database().ref('/players').orderByValue().once('value')
             .then(snapshot => {
-                let players = snapshot.val().filter(p => p != null);
-                players.sort();
-                _.pullAll(players, _.keys(session.votes));
-                this.setState({players, loading: _.assign(this.state.loading, {players: false})});
+                let allPlayers = snapshot.val().filter(p => p != null);
+                allPlayers.sort();
+
+                const cachedPlayerName = this.props.cookies.get('playerName');
+                let currentPlayer = null;
+                if (!_.isEmpty(cachedPlayerName) && allPlayers.indexOf(cachedPlayerName) !== -1) {
+                    currentPlayer = loadExistingPlayer(cachedPlayerName, session);
+                } else {
+                    currentPlayer = new Player();
+                }
+
+                let players = _.without(allPlayers, ..._.keys(session.votes));
+                this.setState({currentPlayer, players, loading: _.assign(this.state.loading, {players: false})});
             });
     }
 
@@ -134,6 +135,7 @@ class App extends Component {
         }
 
         return <VotingForm error={this.state.error}
+                           currentPlayerName={_.get(this.state.currentPlayer, 'name')}
                            players={this.state.players}
                            games={this.state.games}
                            onSubmit={(vote) => this.handlePlayerVote(vote)}/>;

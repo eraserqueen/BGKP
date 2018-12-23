@@ -9,6 +9,7 @@ class VotingForm extends Component {
         error: PropTypes.string,
         games: PropTypes.arrayOf(PropTypes.string).isRequired,
         players: PropTypes.arrayOf(PropTypes.string).isRequired,
+        currentPlayerName: PropTypes.string,
         onSubmit: PropTypes.func.isRequired
     };
 
@@ -18,7 +19,7 @@ class VotingForm extends Component {
         super(props);
         this.state = {
             error: null,
-            playerName: null,
+            playerName: props.currentPlayerName,
             gameSelectors: _.range(0, this.ALLOWED_SELECTIONS).map((i) => ({
                 order: i,
                 options: props.games,
@@ -55,9 +56,11 @@ class VotingForm extends Component {
             <div className='form-group row'>
                 <label className='col text-left'>My name is:</label>
                 <div className='col'>
+                    {this.props.currentPlayerName ||
                     <PlayerSelector
                         players={this.props.players}
                         onSelected={(playerName) => this.setState({playerName})}/>
+                    }
                 </div>
             </div>
             <div className='form-group row'>
