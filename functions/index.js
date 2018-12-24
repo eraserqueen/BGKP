@@ -1,7 +1,7 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-const client = require('./bggClient');
-const adapter = require('./bggAdapter');
+const client = require('./bgg/bggClient');
+const adapter = require('./bgg/bggAdapter');
 
 admin.initializeApp();
 
@@ -15,5 +15,5 @@ exports.synchronizeGameCollection = functions.https.onRequest((req, res) => {
         .then(onlineList => adapter.mapCollectionToGamesList(onlineList))
         .then(collection => admin.database().ref('/games').set(collection))
         .then(() => res.send('done'))
-        .catch(err => res.write(err));
+        .catch(err => res.send(err));
 });

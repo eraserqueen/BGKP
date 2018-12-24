@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<items totalitems="1" termsofuse="https://boardgamegeek.com/xmlapi/termsofuse" pubdate="Fri, 17 Aug 2018 01:41:56 +0000">
+    <item objecttype="thing" objectid="37111" subtype="boardgame" collid="53659695">
+        <name sortindex="1">Battlestar Galactica: The Board Game</name>
+        <yearpublished>2008</yearpublished>
+        <image>https://cf.geekdo-images.com/original/img/-hZFpTm-evjyuLD_bj-y845-4f8=/0x0/pic354500.jpg</image>
+        <thumbnail>https://cf.geekdo-images.com/thumb/img/NpZjJd2NgxSJV2WrlB_U1e89txY=/fit-in/200x150/pic354500.jpg</thumbnail>
+        <stats minplayers="3"																	maxplayers="6"																	minplaytime="120"																	maxplaytime="300"																	playingtime="300"																	numowned="31492" >
+            <rating value="N/A">
+                <usersrated value="28404" />
+                <average value="7.75047" />
+                <bayesaverage value="7.60655" />
+                <stddev value="1.56277" />
+                <median value="0" />
+            </rating>
+        </stats>
+        <status own="1" prevowned="0" fortrade="0" want="0" wanttoplay="0" wanttobuy="0" wishlist="0"  preordered="0" lastmodified="2018-08-16 20:29:27" />
+        <numplays>0</numplays>
+    </item>
+</items>

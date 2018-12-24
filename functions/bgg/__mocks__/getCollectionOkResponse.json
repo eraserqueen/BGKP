@@ -1,0 +1,88 @@
+{
+  "items": {
+    "_attributes": {
+      "pubdate": "Fri, 17 Aug 2018 01:41:56 +0000",
+      "termsofuse": "https://boardgamegeek.com/xmlapi/termsofuse",
+      "totalitems": "1"
+    },
+    "item": {
+      "_attributes": {
+        "collid": "53659695",
+        "objectid": "37111",
+        "objecttype": "thing",
+        "subtype": "boardgame"
+      },
+      "image": {
+        "_text": "https://cf.geekdo-images.com/original/img/-hZFpTm-evjyuLD_bj-y845-4f8=/0x0/pic354500.jpg"
+      },
+      "name": {
+        "_attributes": {
+          "sortindex": "1"
+        },
+        "_text": "Battlestar Galactica: The Board Game"
+      },
+      "numplays": {
+        "_text": 0
+      },
+      "stats": {
+        "_attributes": {
+          "maxplayers": "6",
+          "maxplaytime": "300",
+          "minplayers": "3",
+          "minplaytime": "120",
+          "numowned": "31492",
+          "playingtime": "300"
+        },
+        "rating": {
+          "_attributes": {
+            "value": "N/A"
+          },
+          "average": {
+            "_attributes": {
+              "value": "7.75047"
+            }
+          },
+          "bayesaverage": {
+            "_attributes": {
+              "value": "7.60655"
+            }
+          },
+          "median": {
+            "_attributes": {
+              "value": "0"
+            }
+          },
+          "stddev": {
+            "_attributes": {
+              "value": "1.56277"
+            }
+          },
+          "usersrated": {
+            "_attributes": {
+              "value": "28404"
+            }
+          }
+        }
+      },
+      "status": {
+        "_attributes": {
+          "fortrade": "0",
+          "lastmodified": "2018-08-16 20:29:27",
+          "own": "1",
+          "preordered": "0",
+          "prevowned": "0",
+          "want": "0",
+          "wanttobuy": "0",
+          "wanttoplay": "0",
+          "wishlist": "0"
+        }
+      },
+      "thumbnail": {
+        "_text": "https://cf.geekdo-images.com/thumb/img/NpZjJd2NgxSJV2WrlB_U1e89txY=/fit-in/200x150/pic354500.jpg"
+      },
+      "yearpublished": {
+        "_text": 2008
+      }
+    }
+  }
+}

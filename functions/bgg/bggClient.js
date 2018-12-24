@@ -1,4 +1,5 @@
 const _ = require('lodash');
+const xml = require('xml-js');
 const http = require('http');
 const https = require('https');
 const Promise = require('promise');
@@ -49,7 +50,7 @@ function giveUpIfStillNoResults(res) {
 
 
 function parseXml(res) {
-    const xml2js = require('xml-js').xml2js;
+    const xml2js = xml.xml2js;
     const parsed = xml2js(res.body, {compact: true, nativeType: true, ignoreDeclaration: true});
     if (parsed.errors) {
         return Promise.reject(new Error(_.get(parsed, 'errors.error.message._text', 'unknown error')));
@@ -58,11 +59,20 @@ function parseXml(res) {
     return parsed;
 }
 
-module.exports = {
-    getCollectionAsync: (username) => {
+class BggClient {
+
+    constructor(
+        hostname = 'www.boardgamegeek.com',
+        port = 443
+    ) {
+        this.hostname = hostname;
+        this.port = port;
+    }
+
+    getCollectionAsync(username) {
         const options = {
-            hostname: 'www.boardgamegeek.com',
-            port: 443,
+            hostname: this.hostname,
+            port: this.port,
             method: 'GET',
             path: `/xmlapi/collection/${username}?subtype=boardgame&stats=1&own=1`
         };
@@ -73,4 +83,6 @@ module.exports = {
             .then(giveUpIfStillNoResults)
             .then(parseXml);
     }
-};
+}
+
+module.exports = new BggClient();
