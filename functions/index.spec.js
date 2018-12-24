@@ -7,37 +7,38 @@ const client = require('./bgg/bggClient');
 const adapter = require('./bgg/bggAdapter');
 
 describe('functions', () => {
-    let adapterMock;
-    let dbMock;
-    let clientMock;
+    let adapterStub;
+    let dbStub;
+    let clientStub;
     let setStub;
     let sandbox = sinon.createSandbox();
 
-    beforeAll(() => {
-        sandbox.stub(admin, 'initializeApp');
-        setStub = sandbox.stub();
-        dbMock = sandbox.stub(admin, 'database').returns({ref: {set: setStub}});
-        clientMock = sandbox.stub(client, 'getCollectionAsync');
-        adapterMock = sandbox.stub(adapter, 'mapCollectionToGamesList');
-    });
-    afterAll(() => {
-        sandbox.restore();
-    });
     describe('synchronizeGameCollection', () => {
-        it('retrieves collection from bgg and maps to local model', () => {
-            clientMock.resolves({});
-            adapterMock.returns([]);
-            const req = { query: {username: 'yassum'} };
+        beforeAll(() => {
+            sandbox.stub(admin, 'initializeApp');
+            setStub = sandbox.stub();
+            dbStub = sandbox.stub(admin, 'database').returns({ref: {set: setStub}});
+            clientStub = sandbox.stub(client, 'getCollectionAsync');
+            adapterStub = sandbox.stub(adapter, 'mapCollectionToGamesList');
+        });
+        afterAll(() => {
+            sandbox.restore();
+        });
+        test('retrieves collection from bgg and maps to local model', async () => {
+            clientStub.resolves({});
+            adapterStub.returns([]);
+            const req = {query: {users: 'yassum'}};
             const res = {
                 send: (data) => {
                     expect(data).toEqual('done');
-                    expect(clientMock.withArgs('yassum').calledOnce).toBeTruthy();
-                    expect(adapterMock.calledOnce).toBeTruthy();
+                    expect(clientStub.withArgs('yassum').calledOnce).toBeTruthy();
+                    expect(adapterStub.calledOnce).toBeTruthy();
                     expect(setStub.calledOnce).toBeTruthy();
                     done();
                 }
             };
-            myFunctions.synchronizeGameCollection(req, res);
+            await myFunctions.synchronizeGameCollection(req, res);
         });
+
     });
 });

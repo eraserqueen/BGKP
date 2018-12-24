@@ -76,12 +76,13 @@ class BggClient {
             method: 'GET',
             path: `/xmlapi/collection/${username}?subtype=boardgame&stats=1&own=1`
         };
-        console.log('Retrieving collection');
+        console.log('Retrieving collection for', username);
         return makeRequest(options)
             .then(tryAgainIfNoResults)
             .then(tryAgainIfNoResults)
             .then(giveUpIfStillNoResults)
-            .then(parseXml);
+            .then(parseXml)
+            .then(json => _.assign(json, {username}));
     }
 }
 

@@ -33,7 +33,7 @@ describe('BGG client', () => {
                     body: okResponseXml
                 }
             });
-            await expect(client.getCollectionAsync('eraserqueen')).resolves.toEqual(jsonResponse);
+            await expect(client.getCollectionAsync('eraserqueen')).resolves.toEqual(Object.assign(jsonResponse, { username: 'eraserqueen'}));
         });
         test('should try request again when client receives ACCEPTED response code', async () => {
             const succeedOnAttemptNum = 3;
@@ -55,7 +55,7 @@ describe('BGG client', () => {
                     }
                 }
             });
-            await expect(client.getCollectionAsync('eraserqueen')).resolves.toEqual(jsonResponse);
+            await expect(client.getCollectionAsync('eraserqueen')).resolves.toEqual(Object.assign(jsonResponse, {username: 'eraserqueen'}));
             expect(server.requests()).toHaveLength(succeedOnAttemptNum);
         });
         test('should return error if server does not return a success response after 3 attempts', async () => {

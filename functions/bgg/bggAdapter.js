@@ -25,9 +25,16 @@ function mapCollectionToGamesList(json) {
     if (collection.name) {
         collection = new Array(collection);
     }
-    return collection.map(mapAttributes).filter(_.identity);
+    return collection.map(mapAttributes).map(game => _.assign(game, {owner: json.username})).filter(_.identity);
+}
+
+function mergeCollections(collections) {
+    let merged = _.groupBy(_.union(...collections), 'id');
+    let dedup = _.flatten(_.map(merged, arr => _.assign(arr[0], {owner: arr.map(a => a.owner)})));
+    return _.sortBy(dedup, 'id');
 }
 
 module.exports = {
-    mapCollectionToGamesList
+    mapCollectionToGamesList,
+    mergeCollections
 };
