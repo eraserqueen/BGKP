@@ -51,10 +51,9 @@ class App extends Component {
     }
 
     loadPlayers(session) {
-        fire.database().ref('/players').orderByValue().once('value')
+        fire.database().ref('/players').once('value')
             .then(snapshot => {
-                let allPlayers = snapshot.val().filter(p => p != null);
-                allPlayers.sort();
+                let allPlayers = _.map(snapshot.val(), p => p.username).sort();
 
                 const cachedPlayerName = this.props.cookies.get('playerName');
                 let currentPlayer = null;
