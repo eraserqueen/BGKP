@@ -101,6 +101,14 @@ class App extends Component {
         }
     }
 
+    handleGamePlayedToggle(game, played) {
+        let gamesPlayed = this.state.session.gamesPlayed;
+        if (!played) _.pull(gamesPlayed, game);
+        else gamesPlayed.push(game);
+        this.setState({gamesPlayed});
+        fire.database().ref('sessions/'+this.state.session.id+'/gamesPlayed').set(gamesPlayed);
+    }
+
     render() {
         return <div className="App">
             <header className="App-header"><span className='display-1'>BGKP</span> v{version}</header>
@@ -122,7 +130,8 @@ class App extends Component {
         }
         if (this.state.session.selectedGames) {
             return <div>
-                <VotingResults games={this.state.session.selectedGames}/>
+                <VotingResults games={this.state.session.selectedGames}
+                               onGamePlayedToggle={(game, played) => this.handleGamePlayedToggle(game, played)}/>
                 <button className='btn btn-primary' onClick={() => this.handleCreateSessionClick()}>
                     Create new Session
                 </button>
@@ -141,6 +150,7 @@ class App extends Component {
                            games={this.state.games}
                            onSubmit={(vote) => this.handlePlayerVote(vote)}/>;
     }
+
 }
 
 
