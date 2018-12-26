@@ -4,14 +4,19 @@ import PropTypes from 'prop-types';
 
 class Toggle extends Component {
     static propTypes = {
+        checked: PropTypes.bool,
         onLabel: PropTypes.string.isRequired,
         offLabel: PropTypes.string.isRequired,
         onClick: PropTypes.func.isRequired
     };
 
+    static defaultProps = {
+      checked: false
+    };
+
     constructor(props) {
         super(props);
-        this.state = {checked: false};
+        this.state = {checked: this.props.checked};
     }
 
     render() {

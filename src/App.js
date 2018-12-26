@@ -131,6 +131,7 @@ class App extends Component {
         if (this.state.session.selectedGames) {
             return <div>
                 <VotingResults games={this.state.session.selectedGames}
+                               gamesPlayed={this.state.session.gamesPlayed}
                                onGamePlayedToggle={(game, played) => this.handleGamePlayedToggle(game, played)}/>
                 <button className='btn btn-primary' onClick={() => this.handleCreateSessionClick()}>
                     Create new Session
