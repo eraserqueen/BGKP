@@ -2,20 +2,16 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const client = require('./bgg/bggClient');
 const adapter = require('./bgg/bggAdapter');
-const _ = require('lodash');
 
 admin.initializeApp();
 
 exports.synchronizeGameCollection = functions.https.onRequest((req, res) => {
-    const users = req.query.users.split(',');
-    if (_.isEmpty(users)) {
-        res.send('missing parameter: users');
-    }
-    console.log('getting collection from users', users);
-    Promise.all(_.map(users, username => client.getCollectionAsync(username)))
-        .then(jsonCollections => _.map(jsonCollections, adapter.mapCollectionToGamesList))
-        .then(adapter.mergeCollections)
-        .then(collection => admin.database().ref('/games').set(collection))
-        .then(() => res.send('done'))
+    admin.database().ref('/players').once('value')
+        .then(snapshot => Object.values(snapshot.val()).map(p => p['bgg-username']).filter(p => p !== undefined))
+        .then(bggUsers => bggUsers.map(username => client.getCollectionAsync(username)))
+        .then(promises => Promise.all(promises))
+        .then(jsonCollections => jsonCollections.map(adapter.mapCollectionToGamesList))
+        .then(gameLists => adapter.mergeGameLists(gameLists))
+        .then(mergedList => admin.database().ref('/games').set(mergedList).then(() => res.send(mergedList)))
         .catch(err => res.send(err));
 });

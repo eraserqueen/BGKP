@@ -7,33 +7,51 @@ const client = require('./bgg/bggClient');
 const adapter = require('./bgg/bggAdapter');
 
 describe('functions', () => {
-    let adapterStub;
     let dbStub;
     let clientStub;
-    let setStub;
+    let adapterStub;
+    let setGamesStub;
+    let getPlayersStub;
     let sandbox = sinon.createSandbox();
+    sandbox.stub(admin, 'initializeApp');
 
     describe('synchronizeGameCollection', () => {
         beforeAll(() => {
-            sandbox.stub(admin, 'initializeApp');
-            setStub = sandbox.stub();
-            dbStub = sandbox.stub(admin, 'database').returns({ref: {set: setStub}});
-            clientStub = sandbox.stub(client, 'getCollectionAsync');
-            adapterStub = sandbox.stub(adapter, 'mapCollectionToGamesList');
+            setGamesStub = sandbox.stub();
+            getPlayersStub = sandbox.stub();
+            dbStub = sandbox.stub(admin, 'database').returns({
+                ref: () => ({
+                    once: getPlayersStub,
+                    set: setGamesStub
+                })
+            });
+            clientStub = sandbox.stub(client);
+            adapterStub = sandbox.stub(adapter);
         });
         afterAll(() => {
             sandbox.restore();
         });
-        test('retrieves collection from bgg and maps to local model', async () => {
-            clientStub.resolves({});
-            adapterStub.returns([]);
-            const req = {query: {users: 'yassum'}};
+        // WIP: this test is always green and never finishes
+        test.skip('retrieves collection from bgg and maps to local model', async () => {
+            getPlayersStub.returns({
+                val: () => ({
+                    '5': {'bgg-username': 'yassum', username: 'Gilles'},
+                    '6': {username: 'Dom'},
+                    '7': {username: 'Carla'},
+                    '8': {'bgg-username': 'abznak', username: 'Tim'}
+                })
+            });
+            const req = {};
             const res = {
                 send: (data) => {
                     expect(data).toEqual('done');
-                    expect(clientStub.withArgs('yassum').calledOnce).toBeTruthy();
-                    expect(adapterStub.calledOnce).toBeTruthy();
-                    expect(setStub.calledOnce).toBeTruthy();
+                    expect(getPlayersStub.calledOnce).toBeTruthy();
+                    expect(clientStub.getCollectionAsync.calledTwice).toBeTruthy();
+                    expect(clientStub.getCollectionAsync.firstCall.args[0]).toEqual('yassum');
+                    expect(clientStub.getCollectionAsync.secondCall.args[0]).toEqual('abznak');
+                    expect(adapterStub.mapCollectionToGamesList.calledTwice).toBeTruthy();
+                    expect(adapterStub.mergeGameLists.calledOnce).toBeTruthy();
+                    expect(setGamesStub.calledOnce).toBeTruthy();
                     done();
                 }
             };

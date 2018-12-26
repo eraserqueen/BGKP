@@ -1,6 +1,6 @@
 const path = require('path');
 const fs = require('fs');
-const {mapCollectionToGamesList, mergeCollections} = require("../bggAdapter");
+const {mapCollectionToGamesList, mergeGameLists} = require("../bggAdapter");
 
 
 describe('BGG Adapter', () => {
@@ -23,7 +23,13 @@ describe('BGG Adapter', () => {
             }];
             await expect(mapCollectionToGamesList(collection)).toEqual(expected);
         });
-        it('merges multiple collections without duplicates', () => {
+    });
+    describe('mergeGameLists', () => {
+        it('returns a single list', () => {
+            const singleList = [{id:1, title: 'game title'}];
+            expect(mergeGameLists([singleList])).toEqual(singleList);
+        });
+        it('merges multiple lists without duplicates', () => {
             const one = [{
                 id: 2,
                 title: 'Dominion',
@@ -57,7 +63,7 @@ describe('BGG Adapter', () => {
                 title: 'Evolution',
                 owner: ['yassum']
             }];
-            expect(mergeCollections([one, two])).toEqual(merged);
+            expect(mergeGameLists([one, two])).toEqual(merged);
 
         });
     });

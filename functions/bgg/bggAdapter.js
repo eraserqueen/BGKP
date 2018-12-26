@@ -28,13 +28,14 @@ function mapCollectionToGamesList(json) {
     return collection.map(mapAttributes).map(game => _.assign(game, {owner: json.username})).filter(_.identity);
 }
 
-function mergeCollections(collections) {
-    let merged = _.groupBy(_.union(...collections), 'id');
+function mergeGameLists(lists) {
+    if(lists.length === 1) return _.sortBy(lists[0], 'id');
+    let merged = _.groupBy(_.union(...lists), 'id');
     let dedup = _.flatten(_.map(merged, arr => _.assign(arr[0], {owner: arr.map(a => a.owner)})));
     return _.sortBy(dedup, 'id');
 }
 
 module.exports = {
     mapCollectionToGamesList,
-    mergeCollections
+    mergeGameLists
 };
